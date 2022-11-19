@@ -1,13 +1,24 @@
-import React, { useContext } from "react";
+import React, { useContext, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { authContext } from "../../Contexts/ContextProvider";
 import toast from "react-hot-toast";
+import useToken from "../../hooks/UseToken";
+
+//sign up starts here
 const SignUp = () => {
+  // const [myEmail, setMyemail] = useState("");
+  const [createdUserEmail, setCreatedUserEmail] = useState("");
+  const [token] = useToken(createdUserEmail);
   const navigate = useNavigate();
+  if (token) {
+    navigate("/");
+  }
+  // const ref = useRef();
 
   const {
     handleSubmit,
+
     formState: { errors },
     register,
   } = useForm();
@@ -20,19 +31,42 @@ const SignUp = () => {
         const updatedUser = {
           displayName: data.name,
         };
-        console.log(updatedUser);
+
         update(updatedUser)
-          .then((res) => {})
+          .then((res) => {
+            saveUser(data.email, data.name);
+          })
           .catch((err) => toast(err.message));
 
         console.log(user);
-
-        navigate("/");
       })
       .catch((err) => {
         toast(err.message);
       });
   };
+
+  //posting the data on database
+  const saveUser = (email, name) => {
+    const user = {
+      email: email,
+      name: name,
+    };
+
+    fetch("http://localhost:5000/users", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(user),
+    })
+      .then((res) => res.json())
+      .then((result) => {
+        setCreatedUserEmail(email);
+      })
+      .catch((err) => console.log(err));
+  };
+
+  const getToken = (email) => {};
   return (
     <div className="h-[800px] flex justify-center items-center">
       <div className="w-96 p-7">
@@ -69,9 +103,13 @@ const SignUp = () => {
             </label>
 
             <input
+              // ref={ref}
               type="email"
+              // onChange={() => setMyemail(getValues("email"))}
               className="input input-bordered w-full max-w-xs"
-              {...register("email")}
+              {...register("email", {
+                // onChange: (e) => setMyemail(e.target.value),
+              })}
             />
           </div>
           <div className="form-control w-full max-w-xs">

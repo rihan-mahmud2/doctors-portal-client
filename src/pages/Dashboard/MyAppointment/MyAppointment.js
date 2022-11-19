@@ -1,4 +1,3 @@
-import { async } from "@firebase/util";
 import { useQuery } from "@tanstack/react-query";
 import React, { useContext } from "react";
 import { authContext } from "../../../Contexts/ContextProvider";
@@ -7,14 +6,23 @@ const MyAppointment = () => {
   const { user } = useContext(authContext);
 
   const uri = `http://localhost:5000/bookings?email=${user?.email}`;
-  const { data: bookingInfo = [] } = useQuery({
+  const { data: bookingInfo = [], isLoading } = useQuery({
     queryKey: ["bookings", user?.email],
     queryFn: () =>
-      fetch(uri)
+      fetch(uri, {
+        headers: {
+          authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      })
         .then((res) => res.json())
         .then((result) => result),
   });
 
+  if (isLoading) {
+    return;
+  }
+
+  console.log(bookingInfo);
   return (
     <div>
       <h1 className="text-3xl font-bold text-center">My Appointment</h1>
@@ -30,7 +38,7 @@ const MyAppointment = () => {
             </tr>
           </thead>
           <tbody>
-            {bookingInfo.map((booking, i) => {
+            {bookingInfo?.map((booking, i) => {
               return (
                 <tr>
                   <th>{i + 1}</th>
